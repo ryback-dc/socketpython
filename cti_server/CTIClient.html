@@ -1,0 +1,23 @@
+<html>
+<head>
+      <script type="text/javascript">
+          var ws = new WebSocket("ws://localhost:9000");
+          function login(){
+                ws.onopen = function()
+                {
+                  // Web Socket is connected, send data using send()
+                  ws.send("Message to send");
+                  alert("Message is sent...");
+                };
+
+          }
+      </script>
+
+</head>
+<body>
+
+<button onclick="login()"> LOGIN CTI </button>
+<button onclick="rundevice()"> RUN DEVICE CTI </button>
+<button onclick="makecall()"> MAKE CALL </button>
+</body>
+</html>
