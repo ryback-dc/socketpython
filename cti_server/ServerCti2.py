@@ -6,7 +6,7 @@ print "-------------------------------------------------------------------------
 print "\n"
 print "                             ______  cti-pty"
 print "                         ___/_____/\ "
-print "                        /         /\\  6.10.1.3.7 "
+print "                        /         /\\  6.10.1.5.7 "
 print "                  _____/__       /  \\ "
 print "                _/       /\_____/___ \  Copyright (c) 2016, WHNDevTeam"
 print "               //       /  \       /\ \ "
@@ -31,11 +31,13 @@ import sys
 import socket
 import threading
 from thread import *
+from multiprocessing import Process
+
 
 print "[INFO] >> load library sys ... "
 print "[INFO] >> load library thread... "
 print "[INFO] >> load library socket... "
-
+print "[INFO] >> loasd library multiprocessing ..."
 
 class ThreadedServer(object):
     def __init__(self, host, port):
@@ -49,20 +51,27 @@ class ThreadedServer(object):
 
     def listen(self):
         self.sock.listen(100)
-        while True:
-            client, address = self.sock.accept()
-            threading.Thread(target = self.listenToClient,args = (client,address)).start()
-            print "[SERVER][CONNECT] >> client %s %s is connected to server ..." % (address, client)
 
-
-    def listenToClient(self, client, address):
-        size    = 1024
         atg     = socket.socket()
         atghost = '192.168.1.147'
         atgport = 8008
         atg.connect((atghost, atgport))
         print "[ATG][CONNECT] >> Connected client to atg server  %s %s ..." % (atghost, atgport)
 
+        while True:
+            client, address = self.sock.accept()
+            d = threading.Thread(target = self.listenToClient,args = (client,address,atg)).start()
+            e = threading.Thread(target = self.listenToATG,args = (client,address,atg)).start()
+
+            #d.startdaemon(True)
+            #d.join()
+            #e.join()
+
+            print "[SERVER][CONNECT] >> client %s %s is connected to server ..." % (address, client)
+
+
+    def listenToClient(self, client, address, atg):
+        size    = 1024
         while True:
             try:
                     data = client.recv(size)
@@ -72,12 +81,6 @@ class ThreadedServer(object):
                         print "[SERVER][CONNECT] >> recieved data on %s %s... " % (address, client)
                         print "[ATG][CONNECT] >> send message %s " % (data)
 
-                        data_reply_atg = atg.recv(1024)
-                        print "[ATG][CONNECT] >>replay message %s " % (data_reply_atg)
-
-                        response = data_reply_atg
-                        client.send(response)
-                        print "[SERVER][CONNECT] >> send message %s" % (response)
                     else :
                         print "no data"
 
@@ -85,7 +88,26 @@ class ThreadedServer(object):
                client.close()
                return False
 
+    def listenToATG(self, client, address, atg) :
+        size  = 5000
+        while True :
+            try :
+                data = atg.recv(size)
+                if data :
 
+                    print "[ATG][CONNECT] >>replay message %s " % (data)
+
+                    response = data
+                    client.send(response)
+                    print "[SERVER][CONNECT] >> send message %s" % (response)
+
+                else :
+
+                    print "error"
+
+            except :
+                atg.close()
+                return False
 
 
 if __name__ == "__main__":
